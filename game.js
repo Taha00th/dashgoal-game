@@ -85,10 +85,10 @@ class Game {
             this.updatePhysics();
         }, 1000 / 60);
 
-        // Network Loop (33 TPS) - Smoother for clients
+        // Network Loop (50 TPS) - High frequency for ultimate smoothness
         setInterval(() => {
             this.broadcastState();
-        }, 30);
+        }, 20);
 
         this.renderLoop();
     }
@@ -298,7 +298,7 @@ class Game {
 
     interpolateEntities() {
         const lerp = (start, end, factor) => start + (end - start) * factor;
-        const factor = 0.2; // Optimized for 33Hz updates
+        const factor = 0.12; // Smoother transitions for 50Hz update rate
 
         // Players
         for (let id in this.players) {
