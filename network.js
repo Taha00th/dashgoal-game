@@ -1,5 +1,5 @@
 // Socket.IO Setup
-const SERVER_URL = 'https://dashgoal-server.vercel.app';
+const SERVER_URL = 'https://dashgoal-server.onrender.com';
 
 const socket = io(SERVER_URL, {
     transports: ['websocket', 'polling']
