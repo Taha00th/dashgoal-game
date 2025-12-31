@@ -10,13 +10,8 @@
 body {
     width: 100vw;
     height: 100vh;
-    /* Detailed Grass Background Pattern */
-    background-color: #5d9e5a;
-    background-image: repeating-linear-gradient(90deg,
-            rgba(0, 0, 0, 0.03) 0px,
-            rgba(0, 0, 0, 0.03) 50px,
-            transparent 50px,
-            transparent 100px);
+    /* Stadium Atmosphere Background */
+    background: radial-gradient(circle at center, #2d5a27 0%, #1a3317 100%);
     overflow: hidden;
     display: flex;
     justify-content: center;
