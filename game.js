@@ -15,8 +15,8 @@ class Game {
 
         // Physics Configurations
         this.friction = 0.98; // Ball friction
-        this.playerFriction = 0.9; // Player sliding effect
-        this.playerAccel = 0.6; // Movement power
+        this.playerFriction = 0.88; // More drag/inertia
+        this.playerAccel = 0.45; // Reduced for control
         this.playerRadius = 15;
 
         this.scores = { red: 0, blue: 0 };
@@ -32,7 +32,6 @@ class Game {
 
     handleKey(e, isDown) {
         const key = e.key.toLowerCase();
-        // console.log("Key: " + key); // Debug
 
         // WASD Support
         if (['w', 'a', 's', 'd'].includes(key)) {
@@ -79,7 +78,6 @@ class Game {
     }
 
     // --- HOST LOGIC ---
-    // --- HOST LOGIC ---
     startHostLoop() {
         if (!this.isHost) return;
 
@@ -103,34 +101,7 @@ class Game {
     }
 
     updatePhysics() {
-        // ... (Physics Code Same as before, omitted for brevity if no changes needed, but replace_file needs context)
-        // Check content size. The user didn't ask to change physics.
-        // Wait, replace_file requires replacing the chunk. I will assume updatePhysics is unchanged 
-        // effectively, but I need to perform the interpolation logic in Client mode.
-        // Actually, updatePhysics is called by host. Client needs interpolation in render loop.
-
-        // Let's just focus on startHostLoop change first, 
-        // then I'll overwrite renderLoop and setState separately or together if contiguous.
-        // startHostLoop is at line 64. updatePhysics is line 81.
-        // setState is at line 202. renderLoop is line 213.
-        // They are far apart. I should stick to startHostLoop here or use multi_replace?
-        // multi_replace is better.
-    }
-
-    // ... (This block is confusing for the tool. I will use multi_replace or separate calls)
-    // Actually, I can just replace the whole file content for clarity or stick to specific blocks.
-    // Let's use replace_file for startHostLoop first.
-
-
-    handleInput(playerId, inputs) {
-        if (this.players[playerId]) {
-            this.players[playerId].inputs = inputs;
-        }
-    }
-
-    updatePhysics() {
         // Update My Inputs (Host)
-        // Host ID is always 'peer_host'
         if (this.players['peer_host']) {
             this.players['peer_host'].inputs = this.keys;
         }
@@ -162,24 +133,23 @@ class Game {
 
             // Shooting Mechanic
             if (p.inputs.space && p.canShoot) {
-                // Kick range is slightly larger than collision range
                 if (dist < this.playerRadius + this.ball.radius + 8) {
                     let angle = Math.atan2(dy, dx);
-                    let shootForce = 12; // Hard kick
+                    let shootForce = 12;
                     this.ball.vx += Math.cos(angle) * shootForce;
                     this.ball.vy += Math.sin(angle) * shootForce;
 
                     p.canShoot = false;
-                    setTimeout(() => { p.canShoot = true; }, 300); // Cooldown
+                    setTimeout(() => { p.canShoot = true; }, 300);
                 }
             }
 
             // Normal Collision (Push ball)
             if (dist < this.playerRadius + this.ball.radius) {
                 let angle = Math.atan2(dy, dx);
-                let force = 2.5; // Normal dribble
+                let force = 3.5;
 
-                // Position Correction (prevent sticking)
+                // Position Correction
                 let overlap = (this.playerRadius + this.ball.radius) - dist;
                 this.ball.x += Math.cos(angle) * overlap;
                 this.ball.y += Math.sin(angle) * overlap;
@@ -204,7 +174,6 @@ class Game {
         }
 
         if (this.ball.x < this.ball.radius) {
-            // Blue Goal!
             if (this.ball.y > 180 && this.ball.y < 300) {
                 this.score('blue');
             } else {
@@ -214,7 +183,6 @@ class Game {
         }
 
         if (this.ball.x > this.width - this.ball.radius) {
-            // Red Goal!
             if (this.ball.y > 180 && this.ball.y < 300) {
                 this.score('red');
             } else {
@@ -226,20 +194,18 @@ class Game {
 
     score(team) {
         this.scores[team]++;
-        // Reset Ball
         this.ball.x = this.width / 2;
         this.ball.y = this.height / 2;
         this.ball.vx = 0;
         this.ball.vy = 0;
 
-        // Reset Players
         for (let id in this.players) {
             let p = this.players[id];
             p.x = p.color === 'red' ? 100 : this.width - 100;
             p.y = this.height / 2;
             p.vx = 0;
             p.vy = 0;
-            p.canShoot = true; // Reset cooldown
+            p.canShoot = true;
         }
     }
 
@@ -258,10 +224,7 @@ class Game {
     }
 
     setState(state) {
-        // Sync Scores & Ball directly (Ball hard to lerp without physics pred)
         this.scores = state.scores;
-        // this.ball = state.ball; // Direct snap for ball (or lerp too?)
-        // Let's LERP Ball too for smoothness
         if (!this.ball.targetX) {
             this.ball.x = state.ball.x;
             this.ball.y = state.ball.y;
@@ -269,53 +232,42 @@ class Game {
         this.ball.targetX = state.ball.x;
         this.ball.targetY = state.ball.y;
 
-        // Sync Players with Interpolation
         for (let id in state.players) {
             if (!this.players[id]) {
-                this.players[id] = state.players[id]; // New player
+                this.players[id] = state.players[id];
             } else {
-                // Update Target Data
                 let p = this.players[id];
                 let newData = state.players[id];
-
-                // If distance is huge (teleport/reset), snap directly
                 if (Math.abs(p.x - newData.x) > 100) {
                     p.x = newData.x;
                     p.y = newData.y;
                 }
-
                 p.targetX = newData.x;
                 p.targetY = newData.y;
-                p.name = newData.name; // Sync name
-                p.inputs = newData.inputs; // Sync inputs (visuals)
+                p.name = newData.name;
+                p.inputs = newData.inputs;
             }
         }
 
-        // Update UI
         document.getElementById('score-red').innerText = this.scores.red;
         document.getElementById('score-blue').innerText = this.scores.blue;
     }
 
-    // --- RENDER ---
     renderLoop() {
-        // Client-Side Interpolation (Smoothing)
         if (!this.isHost) {
             this.interpolateEntities();
         }
-
         this.draw();
         requestAnimationFrame(() => this.renderLoop());
     }
 
     interpolateEntities() {
         const lerp = (start, end, factor) => start + (end - start) * factor;
-        const factor = 0.12; // Smoother transitions for 50Hz update rate
+        const factor = 0.12;
 
-        // Players
         for (let id in this.players) {
             let p = this.players[id];
             if (p.targetX !== undefined) {
-                // Snap if distance is too big (teleport)
                 if (Math.abs(p.x - p.targetX) > 150) {
                     p.x = p.targetX;
                     p.y = p.targetY;
@@ -326,7 +278,6 @@ class Game {
             }
         }
 
-        // Ball
         if (this.ball.targetX !== undefined) {
             this.ball.x = lerp(this.ball.x, this.ball.targetX, factor);
             this.ball.y = lerp(this.ball.y, this.ball.targetY, factor);
@@ -334,81 +285,93 @@ class Game {
     }
 
     draw() {
-        // Clear background
-        this.ctx.fillStyle = '#4a7c59';
+        // 1. Draw Beautiful Grass
+        let grassGradient = this.ctx.createRadialGradient(
+            this.width / 2, this.height / 2, 50,
+            this.width / 2, this.height / 2, this.width
+        );
+        grassGradient.addColorStop(0, '#4e8d3e');
+        grassGradient.addColorStop(1, '#345e2a');
+        this.ctx.fillStyle = grassGradient;
         this.ctx.fillRect(0, 0, this.width, this.height);
 
-        // Grass Pattern (Simple Lines)
-        this.ctx.fillStyle = 'rgba(0,0,0,0.05)';
-        for (let i = 0; i < this.width; i += 100) {
-            if ((i / 100) % 2 === 0) this.ctx.fillRect(i, 0, 50, this.height);
+        // 2. Pro Grass Stripes
+        this.ctx.fillStyle = 'rgba(0,0,0,0.06)';
+        for (let i = 0; i < this.width; i += 80) {
+            if ((i / 80) % 2 === 0) {
+                this.ctx.fillRect(i, 0, 40, this.height);
+            }
         }
 
-        // Draw Pitch Lines
-        this.ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-        this.ctx.lineWidth = 3;
+        // 3. Pitch Outlines
+        this.ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+        this.ctx.lineWidth = 4;
+        this.ctx.strokeRect(10, 10, this.width - 20, this.height - 20);
 
-        // Middle Line
         this.ctx.beginPath();
-        this.ctx.moveTo(this.width / 2, 0);
-        this.ctx.lineTo(this.width / 2, this.height);
+        this.ctx.moveTo(this.width / 2, 10);
+        this.ctx.lineTo(this.width / 2, this.height - 10);
         this.ctx.stroke();
 
-        // Center Circle
         this.ctx.beginPath();
-        this.ctx.arc(this.width / 2, this.height / 2, 60, 0, Math.PI * 2);
+        this.ctx.arc(this.width / 2, this.height / 2, 70, 0, Math.PI * 2);
         this.ctx.stroke();
 
-        // Goals
-        this.ctx.fillStyle = '#ecf0f1';
-        this.ctx.fillRect(0, 180, 5, 120); // Left Goal
-        this.ctx.fillRect(this.width - 5, 180, 5, 120); // Right Goal
+        this.ctx.beginPath();
+        this.ctx.arc(this.width / 2, this.height / 2, 4, 0, Math.PI * 2);
+        this.ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        this.ctx.fill();
 
-        // Draw Players
+        this.ctx.strokeRect(10, 110, 100, 260); // Penalty Areas
+        this.ctx.strokeRect(this.width - 110, 110, 100, 260);
+
+        // 4. Goals
+        this.ctx.lineWidth = 6;
+        this.ctx.strokeStyle = '#fff';
+        this.ctx.strokeRect(-5, 180, 20, 120); // Left
+        this.ctx.strokeRect(this.width - 15, 180, 20, 120); // Right
+
+        // 5. Draw Players
         for (let id in this.players) {
             let p = this.players[id];
-
-            // Halo/Shadow (Turn White if space is pressed!)
             this.ctx.beginPath();
-            this.ctx.arc(p.x, p.y + 2, this.playerRadius + 4, 0, Math.PI * 2);
-            if (p.inputs && p.inputs.space) {
-                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)'; // White glow kicking
-            } else {
-                this.ctx.fillStyle = 'rgba(0,0,0,0.2)'; // Normal shadow
-            }
+            this.ctx.arc(p.x, p.y + 4, this.playerRadius, 0, Math.PI * 2);
+            this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
             this.ctx.fill();
 
-            // Player Body
+            if (p.inputs && p.inputs.space) {
+                this.ctx.beginPath();
+                this.ctx.arc(p.x, p.y, this.playerRadius + 6, 0, Math.PI * 2);
+                this.ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                this.ctx.fill();
+            }
+
             this.ctx.beginPath();
             this.ctx.arc(p.x, p.y, this.playerRadius, 0, Math.PI * 2);
-            this.ctx.fillStyle = p.color === 'red' ? '#e74c3c' : '#3498db';
+            this.ctx.fillStyle = p.color === 'red' ? '#ff4d4d' : '#4d94ff';
             this.ctx.fill();
-
-            // Player Border
-            this.ctx.strokeStyle = 'white';
-            this.ctx.lineWidth = 2;
+            this.ctx.strokeStyle = '#fff';
+            this.ctx.lineWidth = 3;
             this.ctx.stroke();
 
-            // Player Name
-            this.ctx.fillStyle = 'white';
-            this.ctx.font = 'bold 12px Arial';
+            this.ctx.fillStyle = '#fff';
+            this.ctx.font = 'bold 13px Nunito, sans-serif';
             this.ctx.textAlign = 'center';
-            this.ctx.fillText(p.name, p.x, p.y - 25);
+            this.ctx.fillText(p.name, p.name === 'Mistake' ? 0 : p.x, p.y - 28);
         }
 
-        // Draw Ball
-        this.ctx.beginPath();
-        this.ctx.arc(this.ball.x, this.ball.y + 2, this.ball.radius, 0, Math.PI * 2);
-        this.ctx.fillStyle = 'rgba(0,0,0,0.2)'; // Shadow
-        this.ctx.fill();
-
+        // 6. Draw Ball
         this.ctx.beginPath();
         this.ctx.arc(this.ball.x, this.ball.y, this.ball.radius, 0, Math.PI * 2);
-        this.ctx.fillStyle = '#ecf0f1';
+        this.ctx.fillStyle = '#fff';
         this.ctx.fill();
-        this.ctx.strokeStyle = '#2c3e50';
-        this.ctx.lineWidth = 1;
+        this.ctx.strokeStyle = '#333';
+        this.ctx.lineWidth = 2;
         this.ctx.stroke();
+        this.ctx.beginPath();
+        this.ctx.arc(this.ball.x, this.ball.y, 4, 0, Math.PI * 2);
+        this.ctx.fillStyle = '#333';
+        this.ctx.fill();
     }
 }
 
