@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dash Goal</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+</head>
+
+<body>
+
+    <div id="ui-layer">
+
+        <!-- 1. LANDING PAGE (HaxBall Style) -->
+        <div id="landing-page" class="fade-in">
+            <!-- Logo Section -->
+            <div class="logo-container">
+                <h1 class="game-logo">Dash<span class="logo-highlight">Goal</span></h1>
+                <div class="logo-icon">⚽</div>
+            </div>
+
+            <!-- Central Modal Box -->
+            <div class="intro-box scale-in">
+                <p class="intro-text">
+                    Dash Goal, takım oyununun ve yeteneğin konuştuğu<br>fizik tabanlı bir 2D futbol oyunudur.
+                </p>
+                <button id="btn-play-game" class="btn-play-main">ŞİMDİ OYNA!</button>
+            </div>
+
+            <div class="footer-links">
+                <span>v1.0.0</span> • <span>Serverless P2P</span>
+            </div>
+        </div>
+
+        <!-- 2. MAIN MENU (Room Setup) - Hidden Initially -->
+        <div id="menu-container" class="glass-panel hidden scale-in">
+            <h2 class="menu-title">LOBİ KURULUMU</h2>
+
+            <!-- Main Menu Section -->
+            <div id="main-menu">
+                <div class="input-group">
+                    <label>Oyuncu Adı</label>
+                    <input type="text" id="username-input" placeholder="Nickinizi girin" value="Oyuncu 1">
+                </div>
+
+                <div class="action-buttons">
+                    <button id="btn-create" class="btn primary-gradient">
+                        Oda Oluştur
+                    </button>
+
+                    <div class="or-separator">
+                        <span>YA DA</span>
+                    </div>
+
+                    <div class="join-area">
+                        <input type="text" id="room-id-input" placeholder="Oda Kodunu Yapıştır">
+                        <button id="btn-join" class="btn secondary-gradient">KATIL</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lobby / Waiting Section (Hidden) -->
+            <div id="lobby-screen" class="hidden">
+                <div class="lobby-header">
+                    <h3>ODAN HAZIR</h3>
+                    <button id="btn-close-lobby" class="btn-icon">✕</button>
+                </div>
+
+                <div class="code-box">
+                    <p>Davet Kodu</p>
+                    <div class="code-display">
+                        <code id="display-room-id">...</code>
+                        <button class="btn-copy"
+                            onclick="navigator.clipboard.writeText(document.getElementById('display-room-id').innerText)">KOPYALA</button>
+                    </div>
+                </div>
+
+                <div id="status-message" class="pulsing-text">Oyuncu Bekleniyor...</div>
+            </div>
+        </div>
+
+        <!-- 3. GAME UI -->
+        <div id="game-ui" class="hidden">
+            <div id="score-board">
+                <span id="score-red">0</span> - <span id="score-blue">0</span>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="debug-console"
+        style="position:fixed; bottom:0; right:0; background:rgba(0,0,0,0.8); color:lime; font-family:monospace; padding:10px; max-height:200px; overflow-y:auto; z-index:9999; width:300px; font-size:12px; pointer-events:none;">
+        System Ready...
+    </div>
+
+    <script src="network.js"></script>
+    <script src="game.js"></script>
+</body>
+
+</html>
