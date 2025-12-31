@@ -14,8 +14,9 @@ class Game {
         this.ball = { x: this.width / 2, y: this.height / 2, vx: 0, vy: 0, radius: 10 };
 
         // Physics Configurations
-        this.friction = 0.98;
-        this.playerSpeed = 7;
+        this.friction = 0.98; // Ball friction
+        this.playerFriction = 0.9; // Player sliding effect
+        this.playerAccel = 0.6; // Movement power
         this.playerRadius = 15;
 
         this.scores = { red: 0, blue: 0 };
@@ -65,6 +66,8 @@ class Game {
             y: this.height / 2,
             color: teamColor,
             inputs: { w: false, a: false, s: false, d: false, space: false },
+            vx: 0,
+            vy: 0,
             canShoot: true // Cooldown
         };
     }
@@ -136,11 +139,17 @@ class Game {
         for (let id in this.players) {
             let p = this.players[id];
 
-            // Movement
-            if (p.inputs.w) p.y -= this.playerSpeed;
-            if (p.inputs.s) p.y += this.playerSpeed;
-            if (p.inputs.a) p.x -= this.playerSpeed;
-            if (p.inputs.d) p.x += this.playerSpeed;
+            // Movement (Acceleration)
+            if (p.inputs.w) p.vy -= this.playerAccel;
+            if (p.inputs.s) p.vy += this.playerAccel;
+            if (p.inputs.a) p.vx -= this.playerAccel;
+            if (p.inputs.d) p.vx += this.playerAccel;
+
+            // Friction & Move
+            p.vx *= this.playerFriction;
+            p.vy *= this.playerFriction;
+            p.x += p.vx;
+            p.y += p.vy;
 
             // Wall Collision (Player)
             p.x = Math.max(this.playerRadius, Math.min(this.width - this.playerRadius, p.x));
@@ -228,6 +237,8 @@ class Game {
             let p = this.players[id];
             p.x = p.color === 'red' ? 100 : this.width - 100;
             p.y = this.height / 2;
+            p.vx = 0;
+            p.vy = 0;
             p.canShoot = true; // Reset cooldown
         }
     }
