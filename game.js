@@ -173,27 +173,35 @@ class Game {
             this.ball.y = Math.max(this.ball.radius, Math.min(this.height - this.ball.radius, this.ball.y));
         }
 
-        if (this.ball.x < this.ball.radius) {
-            if (this.ball.y > 180 && this.ball.y < 300) {
+        if (this.ball.x < this.ball.radius + 2) {
+            // Blue Goal! (Left Side)
+            if (this.ball.y > 170 && this.ball.y < 310) {
                 this.score('blue');
             } else {
                 this.ball.vx *= -1;
-                this.ball.x = this.ball.radius;
+                this.ball.x = this.ball.radius + 2;
             }
         }
 
-        if (this.ball.x > this.width - this.ball.radius) {
-            if (this.ball.y > 180 && this.ball.y < 300) {
+        if (this.ball.x > this.width - this.ball.radius - 2) {
+            // Red Goal! (Right Side)
+            if (this.ball.y > 170 && this.ball.y < 310) {
                 this.score('red');
             } else {
                 this.ball.vx *= -1;
-                this.ball.x = this.width - this.ball.radius;
+                this.ball.x = this.width - this.ball.radius - 2;
             }
         }
     }
 
     score(team) {
         this.scores[team]++;
+
+        // Visual Animation
+        const overlay = document.getElementById('goal-overlay');
+        overlay.classList.remove('hidden');
+        setTimeout(() => overlay.classList.add('hidden'), 2000);
+
         this.ball.x = this.width / 2;
         this.ball.y = this.height / 2;
         this.ball.vx = 0;
@@ -224,7 +232,16 @@ class Game {
     }
 
     setState(state) {
-        this.scores = state.scores;
+        // Update UI & Animation
+        if (state.scores.red !== this.scores.red || state.scores.blue !== this.scores.blue) {
+            this.scores = { ...state.scores };
+            const overlay = document.getElementById('goal-overlay');
+            if (overlay) {
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.add('hidden'), 2000);
+            }
+        }
+
         if (!this.ball.targetX) {
             this.ball.x = state.ball.x;
             this.ball.y = state.ball.y;
@@ -328,8 +345,8 @@ class Game {
         // 4. Goals
         this.ctx.lineWidth = 6;
         this.ctx.strokeStyle = '#fff';
-        this.ctx.strokeRect(-5, 180, 20, 120); // Left
-        this.ctx.strokeRect(this.width - 15, 180, 20, 120); // Right
+        this.ctx.strokeRect(-5, 170, 20, 140); // Left
+        this.ctx.strokeRect(this.width - 15, 170, 20, 140); // Right
 
         // 5. Draw Players
         for (let id in this.players) {
