@@ -2,7 +2,8 @@
 const SERVER_URL = 'https://dashgoal-server.onrender.com';
 
 const socket = io(SERVER_URL, {
-    transports: ['websocket', 'polling']
+    transports: ['websocket'],
+    upgrade: false
 });
 
 let isHost = false;
