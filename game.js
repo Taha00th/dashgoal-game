@@ -38,6 +38,81 @@ class Game {
         this.keys = { w: false, a: false, s: false, d: false, space: false };
         window.addEventListener('keydown', (e) => this.handleKey(e, true));
         window.addEventListener('keyup', (e) => this.handleKey(e, false));
+
+        // Touch Listeners
+        this.initTouchControls();
+
+        // Show mobile controls layer (visibility still controlled by CSS media query)
+        document.getElementById('mobile-controls').classList.remove('hidden');
+    }
+
+    initTouchControls() {
+        const joystickBase = document.getElementById('joystick-base');
+        const joystickKnob = document.getElementById('joystick-knob');
+        const kickBtn = document.getElementById('btn-kick-mobile');
+
+        if (!joystickBase || !kickBtn) return;
+
+        // Kick Button
+        kickBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.handleKey({ key: ' ' }, true);
+        });
+        kickBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.handleKey({ key: ' ' }, false);
+        });
+
+        // Joystick Logic
+        let joystickActive = false;
+        let baseRect = null;
+
+        const handleJoystick = (e) => {
+            if (!joystickActive) return;
+            e.preventDefault();
+
+            const touch = e.touches[0];
+            const centerX = baseRect.left + baseRect.width / 2;
+            const centerY = baseRect.top + baseRect.height / 2;
+
+            let dx = touch.clientX - centerX;
+            let dy = touch.clientY - centerY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const maxRadius = baseRect.width / 2;
+
+            if (dist > maxRadius) {
+                dx = (dx / dist) * maxRadius;
+                dy = (dy / dist) * maxRadius;
+            }
+
+            // Update Knob Position
+            joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+
+            // Map to WASD
+            const threshold = 15;
+            this.keys.w = dy < -threshold;
+            this.keys.s = dy > threshold;
+            this.keys.a = dx < -threshold;
+            this.keys.d = dx > threshold;
+
+            if (!this.isHost) sendInput(this.keys);
+        };
+
+        joystickBase.addEventListener('touchstart', (e) => {
+            joystickActive = true;
+            baseRect = joystickBase.getBoundingClientRect();
+            handleJoystick(e);
+        });
+
+        window.addEventListener('touchmove', handleJoystick, { passive: false });
+
+        window.addEventListener('touchend', () => {
+            if (!joystickActive) return;
+            joystickActive = false;
+            joystickKnob.style.transform = `translate(-50%, -50%)`;
+            this.keys.w = this.keys.a = this.keys.s = this.keys.d = false;
+            if (!this.isHost) sendInput(this.keys);
+        });
     }
 
     handleKey(e, isDown) {
