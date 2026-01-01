@@ -1,7 +1,7 @@
 // --- Socket.IO Setup & State ---
 const IS_FILE = window.location.protocol === 'file:';
 const LOCAL_URL = 'http://localhost:3000';
-const ONLINE_URL = 'https://dashgoal-server-sqdv.vercel.app'; // User provided Vercel URL
+const ONLINE_URL = 'https://dashgoal-server-qu4m.vercel.app'; // New Vercel Server URL
 
 let socket;
 let currentServerType = 'local';
