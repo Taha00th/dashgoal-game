@@ -104,10 +104,6 @@ body {
     position: relative;
 }
 
-.intro-box::after {
-    /* Little triangle at top?? Maybe not needed for simple modal */
-}
-
 .intro-text {
     font-size: 1.1rem;
     color: #ecf0f1;
@@ -379,6 +375,98 @@ code {
     }
 }
 
-#goal-overlay.hidden {
+
+/* --- MOBILE CONTROLS --- */
+#mobile-controls {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
     display: none;
+    /* Hidden by default for everyone */
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 0 40px;
+    pointer-events: none;
+    z-index: 100;
+}
+
+#joystick-container {
+    width: 120px;
+    height: 120px;
+    position: relative;
+    pointer-events: auto;
+    touch-action: none;
+}
+
+#joystick-base {
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    border: 3px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    position: relative;
+    backdrop-filter: blur(5px);
+}
+
+#joystick-knob {
+    width: 50px;
+    height: 50px;
+    background: #fff;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+#btn-kick-mobile {
+    width: 80px;
+    height: 80px;
+    background: #e74c3c;
+    color: white;
+    border: 4px solid #c0392b;
+    border-radius: 50%;
+    font-family: 'Titan One', cursive;
+    font-size: 1.2rem;
+    pointer-events: auto;
+    touch-action: none;
+    box-shadow: 0 6px 0 #922b21;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+}
+
+#btn-kick-mobile:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #922b21;
+    background: #c0392b;
+}
+
+/* Show mobile controls ONLY on touch devices */
+@media (pointer: coarse) {
+    #mobile-controls:not(.hidden) {
+        display: flex !important;
+    }
+}
+
+/* Responsive Scaling for the whole UI */
+@media (max-width: 800px) {
+    .game-logo {
+        font-size: 3rem;
+    }
+
+    .intro-box {
+        width: 90%;
+        padding: 1rem;
+    }
+
+    .btn-play-main {
+        font-size: 1.5rem;
+    }
+
+    #score-board {
+        font-size: 2rem;
+    }
 }
