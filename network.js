@@ -27,7 +27,7 @@ function initSocket(type) {
     console.log(`Initializing socket connection to ${type}: ${url}`);
 
     socket = io(url, {
-        transports: ['websocket'],
+        transports: ['websocket', 'polling'], // Added polling fallback
         upgrade: false,
         reconnection: true,
         reconnectionAttempts: 10,
@@ -60,6 +60,13 @@ function setupSocketEvents() {
 
     socket.on('connect_error', (err) => {
         console.warn('Connection failed:', err);
+        const btn = document.getElementById('btn-create');
+        if (btn) {
+            btn.innerText = "BAĞLANTI HATASI";
+            btn.style.background = "#e74c3c";
+        }
+        // Detailed notification
+        safeNotify("Sunucuya bağlanılamadı! Lütfen sunucu adresinin doğru olduğundan ve sunucunun çalıştığından emin olun. Hata: " + err.message);
     });
 
     socket.on('player-joined', (data) => {
